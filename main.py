@@ -4,6 +4,7 @@ from flask import Flask, render_template, request
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+from datetime import datetime
 
 # Use the application default credentials
 cred = credentials.ApplicationDefault()
@@ -22,8 +23,15 @@ def main():
 @app.route("/login")
 def login():
     users = db.collection(u'users').get()
-
     return f"users: {users}"
+
+@app.route("/add_user/{username}")
+def login(username):
+    user = {
+        "date_created" : datetime.now()
+    }
+    db.collection(u'users').document(username).set(user)
+    return f"Added user with username : {username}"
 
 @app.route("/save_playlists", methods = ['POST'])
 def save_playlists():
