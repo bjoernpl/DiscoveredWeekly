@@ -26,7 +26,7 @@ def login():
     return f"users: {users}"
 
 @app.route("/add_user/{username}")
-def login(username):
+def add_user(username):
     user = {
         "date_created" : datetime.now()
     }
