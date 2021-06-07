@@ -1,7 +1,17 @@
 import os
 
 from flask import Flask, render_template, request
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
 
+# Use the application default credentials
+cred = credentials.ApplicationDefault()
+firebase_admin.initialize_app(cred, {
+  'projectId': "discovered-weekly-316016",
+})
+
+db = firestore.client()
 app = Flask(__name__)
 
 @app.route("/")
@@ -11,8 +21,9 @@ def main():
 
 @app.route("/login")
 def login():
-    id = os.environ.get("SPOTIFY_CLIENT_ID")
-    return f"You are trying to log in! client id: {id}"
+    users = db.collection(u'users').get()
+
+    return f"users: {users.to_dict()}"
 
 @app.route("/save_playlists", methods = ['POST'])
 def save_playlists():
