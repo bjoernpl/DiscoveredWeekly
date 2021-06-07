@@ -23,7 +23,7 @@ def main():
 def login():
     users = db.collection(u'users').get()
 
-    return f"users: {users.to_dict()}"
+    return f"users: {users}"
 
 @app.route("/save_playlists", methods = ['POST'])
 def save_playlists():
