@@ -25,7 +25,7 @@ def login():
     users = db.collection(u'users').get()
     return f"users: {users}"
 
-@app.route("/add_user/{username}")
+@app.route("/add_user/<username>")
 def add_user(username):
     user = {
         "date_created" : datetime.now()
