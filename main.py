@@ -49,36 +49,46 @@ def logged_in():
         print("Access token available! Trying to get user information...")
         sp = spotipy.Spotify(access_token)
         results = sp.current_user()
+        add_user(results["id"])
         return results
 
     else:
         return "test :D"
 
-@app.route("/users")
 def get_users():
     users = db.collection(u'users').get()
-    users = [user.id for user in users]
-    return f"users: {users}"
-
-@app.route("/add_user/<username>")
+    return [user.id for user in users]
+    
 def add_user(username):
     user = {
         "date_created" : datetime.now()
     }
-    db.collection(u'users').document(username).set(user)
-    return f"Added user with username : {username}"
+    ref = db.collection(u'users').document(username)
+    if not ref.exists():
+        ref.set(user)
 
 @app.route("/save_playlists", methods = ['POST'])
 def save_playlists():
     code = request.headers.get("passcode", "placeholder")
     if code == os.environ.get("SAVE_PLAYLISTS_CODE"):
-        return "Great success"
+        for user in get_users():
+            cache_handler = spotipy.CacheFileHandler(user)
+            auth = SpotifyOAuth(
+                client_id=os.environ.get("SPOTIFY_CLIENT_ID", "none"), 
+                client_secret=os.environ.get("SPOTIFY_CLIENT_SECRET", "none"), 
+                redirect_uri="https://pluester.dev/logged_in",
+                scope="playlist-modify-private playlist-read-private user-library-read",
+                cache_handler=cache_handler)
+            token_info = auth.get_cached_token()
+            if token_info:
+                access_token = token_info['access_token']
+                sp = spotipy.Spotify(access_token)
+                print(sp.current_user())
+            else:
+                continue
+
     else:
         return "You should not be here. Shoo"
-
-def authorize_spotify():
-    
-    return spotipy.Spotify(auth_manager=token)
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
