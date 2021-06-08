@@ -32,25 +32,25 @@ def main():
 @app.route("/logged_in")
 def logged_in():
     access_token = ""
-    token_info = auth.get_cached_token()
-
-    if token_info:
-        print("Found cached token!")
+    
+    url = request.url
+    code = auth.parse_response_code(url)
+    if code:
+        print("Found Spotify auth code in Request URL! Trying to get valid access token...")
+        token_info = auth.get_access_token(code)
         access_token = token_info['access_token']
-    else:
-        url = request.url
-        code = auth.parse_response_code(url)
-        if code:
-            print("Found Spotify auth code in Request URL! Trying to get valid access token...")
-            token_info = auth.get_access_token(code)
-            access_token = token_info['access_token']
 
     if access_token:
         print("Access token available! Trying to get user information...")
         sp = spotipy.Spotify(access_token)
         results = sp.current_user()
-        add_user(results["id"])
-        return results
+        username = results["id"]
+        add_user(username)
+
+        cache_handler = spotipy.CacheFileHandler(username)
+        cache_handler.save_token_to_cache(token_info)
+        
+        return f"You have successfully logged in as {username}. Your 'Discover Weekly' playlist will be copied every monday at 7:00 CET"
 
     else:
         return "test :D"
