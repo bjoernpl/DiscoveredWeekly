@@ -86,7 +86,7 @@ def save_playlists():
                 print(sp.current_user())
             else:
                 continue
-
+        return "Great success"
     else:
         return "You should not be here. Shoo"
 
