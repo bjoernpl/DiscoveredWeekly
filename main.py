@@ -64,7 +64,7 @@ def add_user(username):
         "date_created" : datetime.now()
     }
     ref = db.collection(u'users').document(username)
-    if not ref.exists:
+    if not ref.get().exists:
         ref.set(user)
 
 @app.route("/save_playlists", methods = ['POST'])
