@@ -71,6 +71,7 @@ def add_user(username):
 def save_playlists():
     code = request.headers.get("passcode", "placeholder")
     if code == os.environ.get("SAVE_PLAYLISTS_CODE"):
+        test = "test"
         for user in get_users():
             cache_handler = spotipy.CacheFileHandler(user)
             auth = SpotifyOAuth(
@@ -83,10 +84,11 @@ def save_playlists():
             if token_info:
                 access_token = token_info['access_token']
                 sp = spotipy.Spotify(access_token)
-                print(sp.current_user())
+                test += f"{sp.current_user()}"
             else:
+                test += f"\n {user} no token"
                 continue
-        return "Great success"
+        return test
     else:
         return "You should not be here. Shoo"
 
