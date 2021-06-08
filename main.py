@@ -23,6 +23,7 @@ def main():
 @app.route("/login")
 def login():
     users = db.collection(u'users').get()
+    users = [user.to_dict() for user in users]
     return f"users: {users}"
 
 @app.route("/add_user/<username>")
