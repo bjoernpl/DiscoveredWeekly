@@ -88,7 +88,7 @@ def logged_in():
         display_name = results["display_name"]
         add_user(username, display_name)
 
-        cache_handler = FirestoreCacheHandler(username)
+        cache_handler = FirestoreCacheHandler(username, db)
         cache_handler.save_token_to_cache(token_info)
         
         return f"You have successfully logged in as {display_name} ({username}). Your 'Discover Weekly' playlist will be copied every monday at 7:00 CET"
@@ -124,7 +124,7 @@ def save_playlists():
     if code == os.environ.get("SAVE_PLAYLISTS_CODE"):
         logging.info("Beginning playlist extraction.")
         for user in get_users():
-            cache_handler = FirestoreCacheHandler(user)
+            cache_handler = FirestoreCacheHandler(user, db)
             auth = SpotifyOAuth(
                 client_id=os.environ.get("SPOTIFY_CLIENT_ID", "none"), 
                 client_secret=os.environ.get("SPOTIFY_CLIENT_SECRET", "none"), 
