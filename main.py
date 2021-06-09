@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
@@ -45,23 +45,31 @@ def logged_in():
         sp = spotipy.Spotify(access_token)
         results = sp.current_user()
         username = results["id"]
-        add_user(username)
+        display_name = results["display_name"]
+        add_user(username, display_name)
 
         cache_handler = spotipy.CacheFileHandler(username)
         cache_handler.save_token_to_cache(token_info)
         
-        return f"You have successfully logged in as {username}. Your 'Discover Weekly' playlist will be copied every monday at 7:00 CET"
+        return f"You have successfully logged in as {display_name} ({username}). Your 'Discover Weekly' playlist will be copied every monday at 7:00 CET"
 
     else:
         return "test :D"
+
+@app.route("/error")
+def error():
+    pass
+
+
 
 def get_users():
     users = db.collection(u'users').get()
     return [user.id for user in users]
     
-def add_user(username):
+def add_user(username, display_name):
     user = {
-        "date_created" : datetime.now()
+        "date_created" : datetime.now(),
+        "display_name": display_name
     }
     ref = db.collection(u'users').document(username)
     if not ref.get().exists:
@@ -80,8 +88,13 @@ def save_playlists():
                 redirect_uri="https://pluester.dev/logged_in",
                 scope="playlist-modify-private playlist-read-private user-library-read",
                 cache_handler=cache_handler)
-            token_info = auth.get_cached_token()
+            token_info = auth.cache_handler.get_cached_token()
             if token_info:
+                try:
+                    token_info = auth.validate_token(token_info)
+                except spotipy.SpotifyOAuthError as e:
+                    #TODO  Do correct error handling
+                    print("an error occured")
                 access_token = token_info['access_token']
                 sp = spotipy.Spotify(access_token)
                 test += f"{sp.current_user()}"
