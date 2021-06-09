@@ -232,11 +232,11 @@ def create_full(sp, args, ids):
 def run_for_user(
     sp,
     username,
-    weekly_template_name="Discovered {week_of_year}-{year}",
+    weekly_name_template="Discovered {week_of_year}-{year}",
     full_playlist_name="Discovered Weekly"
     ):
-    Args = namedtuple("Args", "username weekly_template_name full_playlist_name")
-    args = Args(username, weekly_template_name, full_playlist_name)
+    Args = namedtuple("Args", "username weekly_name_template full_playlist_name")
+    args = Args(username, weekly_name_template, full_playlist_name)
 
     logging.info(f"Extracting for user: {username}")
     ids, names, artists = dw_tracks(sp, args)
