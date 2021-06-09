@@ -28,8 +28,9 @@ class FirestoreCacheHandler(spotipy.CacheHandler):
         cached_token = self.cacheHandler.get_cached_token()
         if not cached_token:
             token_ref = self.db.collection("tokens").document(self.username)
-            if token_ref.exists:
-                token_info = token_ref.get().to_dict()
+            token = token_ref.get()
+            if token.exists:
+                token_info = token.to_dict()
                 return token_info
         return None
             
