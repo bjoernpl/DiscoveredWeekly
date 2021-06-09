@@ -164,6 +164,7 @@ def get_playlist_id(sp, playlist_name):
     i=0
     while True:
         playlists = sp.current_user_playlists(offset=i*50)['items']
+        logging.info("\n".join(playlist["name"] for playlist in playlists))
         for playlist in playlists:
             if playlist['name'] == playlist_name:
                 playlist_id = playlist['id']
