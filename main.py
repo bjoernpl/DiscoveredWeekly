@@ -18,6 +18,26 @@ class LossyCacheHandler(spotipy.CacheHandler):
     def save_token_to_cache(self, token_info):
         return None
 
+class FirestoreCacheHandler(spotipy.CacheHandler):
+    def __init__(self, username, db) -> None:
+        self.cacheHandler = spotipy.CacheFileHandler(username)
+        self.username = username
+        self.db = db
+
+    def get_cached_token(self):
+        cached_token = self.cacheHandler.get_cached_token()
+        if not cached_token:
+            token_ref = self.db.collection("tokens").document(self.username)
+            if token_ref.exists:
+                token_info = token_ref.get().to_dict()
+                return token_info
+        return None
+            
+    def save_token_to_cache(self, token_info):
+        self.cacheHandler.save_token_to_cache(token_info)
+        self.db.collection("tokens").document(self.username).set(token_info)
+    
+
 # Use the application default credentials for firebase admin
 cred = credentials.ApplicationDefault()
 firebase_admin.initialize_app(cred, {
@@ -68,7 +88,7 @@ def logged_in():
         display_name = results["display_name"]
         add_user(username, display_name)
 
-        cache_handler = spotipy.CacheFileHandler(username)
+        cache_handler = FirestoreCacheHandler(username)
         cache_handler.save_token_to_cache(token_info)
         
         return f"You have successfully logged in as {display_name} ({username}). Your 'Discover Weekly' playlist will be copied every monday at 7:00 CET"
@@ -104,7 +124,7 @@ def save_playlists():
     if code == os.environ.get("SAVE_PLAYLISTS_CODE"):
         logging.info("Beginning playlist extraction.")
         for user in get_users():
-            cache_handler = spotipy.CacheFileHandler(user)
+            cache_handler = FirestoreCacheHandler(user)
             auth = SpotifyOAuth(
                 client_id=os.environ.get("SPOTIFY_CLIENT_ID", "none"), 
                 client_secret=os.environ.get("SPOTIFY_CLIENT_SECRET", "none"), 
