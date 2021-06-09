@@ -76,10 +76,10 @@ def logged_in():
     if code:
         try:
             token_info = auth.get_access_token(code)
+            access_token = token_info['access_token']
         except SpotifyOauthError as e:
             logging.warning(f"Invalid access token requested: {e}")
-        finally:
-            access_token = token_info['access_token']
+            
 
     if access_token:
         logging.info("Access token successfully added. Getting user info")
@@ -245,9 +245,6 @@ def run_for_user(
     logging.info(f"Extracting for user: {username}")
     try:
         ids, names, artists = dw_tracks(sp, args)
-    except:
-        logging.warning(f"No Discover Weekly playlist found for user {username}")
-    finally:
         batch = db.batch()
         for track_id, name, artist in zip(ids, names, artists):
             ref = db.collection(u"tracks").document(track_id)
@@ -258,6 +255,8 @@ def run_for_user(
         batch.commit()
         create_weekly(sp, args, ids)
         create_full(sp, args, ids)
+    except:
+        logging.warning(f"No Discover Weekly playlist found for user {username}")
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
