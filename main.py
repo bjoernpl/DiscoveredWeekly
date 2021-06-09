@@ -8,7 +8,12 @@ from datetime import datetime
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
-from cache_handler import LossyCacheHandler
+class LossyCacheHandler(spotipy.CacheHandler):
+    def get_cached_token(self):
+        return None
+
+    def save_token_to_cache(self, token_info):
+        return None
 
 # Use the application default credentials
 cred = credentials.ApplicationDefault()
@@ -108,6 +113,9 @@ def save_playlists():
         return test
     else:
         return "You should not be here. Shoo"
+
+
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
