@@ -8,6 +8,8 @@ from datetime import datetime
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
+from cache_handler import LossyCacheHandler
+
 # Use the application default credentials
 cred = credentials.ApplicationDefault()
 firebase_admin.initialize_app(cred, {
@@ -19,7 +21,8 @@ auth = SpotifyOAuth(
         client_id=os.environ.get("SPOTIFY_CLIENT_ID", "none"), 
         client_secret=os.environ.get("SPOTIFY_CLIENT_SECRET", "none"), 
         redirect_uri="https://pluester.dev/logged_in",
-        scope="playlist-modify-private playlist-read-private user-library-read")
+        scope="playlist-modify-private playlist-read-private user-library-read",
+        cache_handler=LossyCacheHandler())
     
 app = Flask(__name__)
 
@@ -37,7 +40,7 @@ def logged_in():
     code = auth.parse_response_code(url)
     if code:
         print("Found Spotify auth code in Request URL! Trying to get valid access token...")
-        token_info = auth.get_access_token(code, check_cache=False)
+        token_info = auth.get_access_token(code)
         print(token_info)
         access_token = token_info['access_token']
 
