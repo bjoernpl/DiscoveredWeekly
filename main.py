@@ -32,13 +32,14 @@ class FirestoreCacheHandler(spotipy.CacheHandler):
             if token.exists:
                 token_info = token.to_dict()
                 return token_info
-        return None
+        return cached_token
             
     def save_token_to_cache(self, token_info):
         self.cacheHandler.save_token_to_cache(token_info)
         self.db.collection("tokens").document(self.username).set(token_info)
     
-
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
 # Use the application default credentials for firebase admin
 cred = credentials.ApplicationDefault()
 firebase_admin.initialize_app(cred, {
@@ -126,16 +127,16 @@ def save_playlists():
         logging.info("Beginning playlist extraction.")
         for user in get_users():
             cache_handler = FirestoreCacheHandler(user, db)
-            auth = SpotifyOAuth(
+            temp_auth = SpotifyOAuth(
                 client_id=os.environ.get("SPOTIFY_CLIENT_ID", "none"), 
                 client_secret=os.environ.get("SPOTIFY_CLIENT_SECRET", "none"), 
                 redirect_uri="https://pluester.dev/logged_in",
                 scope="playlist-modify-private playlist-read-private user-library-read",
                 cache_handler=cache_handler)
-            token_info = auth.cache_handler.get_cached_token()
+            token_info = temp_auth.cache_handler.get_cached_token()
             if token_info:
                 try:
-                    token_info = auth.validate_token(token_info)
+                    token_info = temp_auth.validate_token(token_info)
                 except SpotifyOauthError as e:
                     #TODO  Do correct error handling
                     print("an error occured")
