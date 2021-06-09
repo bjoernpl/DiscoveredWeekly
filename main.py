@@ -8,7 +8,7 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 from datetime import datetime
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth, SpotifyOAuthError
+from spotipy.oauth2 import SpotifyOAuth, SpotifyOauthError
 from collections import namedtuple
 
 class LossyCacheHandler(spotipy.CacheHandler):
@@ -54,7 +54,7 @@ def logged_in():
     if code:
         try:
             token_info = auth.get_access_token(code)
-        except SpotifyOAuthError as e:
+        except SpotifyOauthError as e:
             logging.warning(f"Invalid access token requested: {e}")
         finally:
             access_token = token_info['access_token']
@@ -115,7 +115,7 @@ def save_playlists():
             if token_info:
                 try:
                     token_info = auth.validate_token(token_info)
-                except SpotifyOAuthError as e:
+                except SpotifyOauthError as e:
                     #TODO  Do correct error handling
                     print("an error occured")
                 access_token = token_info['access_token']
