@@ -1,7 +1,6 @@
 import os
-
+import sys
 import logging
-from typing import NamedTuple
 from flask import Flask, render_template, request, redirect
 import firebase_admin
 from firebase_admin import credentials
@@ -38,8 +37,9 @@ class FirestoreCacheHandler(spotipy.CacheHandler):
         self.cacheHandler.save_token_to_cache(token_info)
         self.db.collection("tokens").document(self.username).set(token_info)
     
-logging.basicConfig()
-logging.getLogger().setLevel(logging.DEBUG)
+
+handler = logging.StreamHandler(sys.stdout)
+logging.basicConfig(handlers=[handler], level=logging.INFO)
 # Use the application default credentials for firebase admin
 cred = credentials.ApplicationDefault()
 firebase_admin.initialize_app(cred, {
@@ -175,6 +175,8 @@ def get_playlist_id(sp, playlist_name):
 
 def dw_tracks(sp, args):
     dw_id = get_playlist_id(sp, "Discover Weekly")
+    if not dw_id:
+        raise LookupError("Discover Weekly playlist not found.")
     playlist_tracks = sp.user_playlist_tracks(
         user=args.username, 
         playlist_id=dw_id)["items"]
@@ -240,17 +242,21 @@ def run_for_user(
     args = Args(username, weekly_name_template, full_playlist_name)
 
     logging.info(f"Extracting for user: {username}")
-    ids, names, artists = dw_tracks(sp, args)
-    batch = db.batch()
-    for track_id, name, artist in zip(ids, names, artists):
-        ref = db.collection(u"tracks").document(track_id)
-        batch.set(ref, {
-            "track_name": name,
-            "artist": artist
-        })
-    batch.commit()
-    create_weekly(sp, args, ids)
-    create_full(sp, args, ids)
+    try:
+        ids, names, artists = dw_tracks(sp, args)
+    except:
+        logging.warning(f"No Discover Weekly playlist found for user {username}")
+    finally:
+        batch = db.batch()
+        for track_id, name, artist in zip(ids, names, artists):
+            ref = db.collection(u"tracks").document(track_id)
+            batch.set(ref, {
+                "track_name": name,
+                "artist": artist
+            })
+        batch.commit()
+        create_weekly(sp, args, ids)
+        create_full(sp, args, ids)
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
