@@ -37,7 +37,8 @@ def logged_in():
     code = auth.parse_response_code(url)
     if code:
         print("Found Spotify auth code in Request URL! Trying to get valid access token...")
-        token_info = auth.get_access_token(code)
+        token_info = auth.get_access_token(code, check_cache=False)
+        print(token_info)
         access_token = token_info['access_token']
 
     if access_token:
