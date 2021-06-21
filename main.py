@@ -99,8 +99,12 @@ def logged_in():
             pass
 
         # cache the dw playlist id for user
-        add_user(username, display_name, dw_id)
-        return f"You have successfully logged in as {display_name} ({username}). Your 'Discover Weekly' playlist will be copied every monday at 7:00 CET"
+        user_id, user_data = add_user(username, display_name, dw_id)
+        out =  f"You have successfully logged in as {display_name} ({username}). Your 'Discover Weekly' playlist will be copied now and every monday at 7:00 CET."
+        run_for_user(user_id, user_data)
+        if not dw_id:
+            out += f" For this service to work, you must follow your 'Discover Weekly' playlist on spotify. Go to https://www.spotify.com/us/discoverweekly/ and copy the id out of the url to continue."
+        return out
 
     else:
         return "test :D"
@@ -134,6 +138,7 @@ def add_user(username, display_name, dw_id):
         except KeyError:
             ref.set(user, merge=["dw_id"])
         logging.info(f"User {username} already exists")
+    return doc.id, user
 
 
 def update_user_playlist_ids(username, recent_id, full_id=None, dw_id=None):
