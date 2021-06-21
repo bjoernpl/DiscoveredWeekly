@@ -101,7 +101,7 @@ def logged_in():
         # cache the dw playlist id for user
         user_id, user_data = add_user(username, display_name, dw_id)
         out =  f"You have successfully logged in as {display_name} ({username}). Your 'Discover Weekly' playlist will be copied now and every monday at 7:00 CET."
-        run_for_user(user_id, user_data)
+        run_for_user(sp, user_id, user_data)
         if not dw_id:
             out += f" For this service to work, you must follow your 'Discover Weekly' playlist on spotify. Go to https://www.spotify.com/us/discoverweekly/ and copy the id out of the url to continue."
         return out
