@@ -88,11 +88,18 @@ def logged_in():
         logging.info(f"User results: {results}")
         username = results["id"]
         display_name = results["display_name"]
-        add_user(username, display_name)
 
         cache_handler = FirestoreCacheHandler(username, db)
         cache_handler.save_token_to_cache(token_info)
-        
+
+        # Check if user has followed dw playlist
+        dw_id = get_playlist_id(sp, "Discover Weekly")
+        if not dw_id:
+            # user does not follow dw playlist
+            pass
+
+        # cache the dw playlist id for user
+        add_user(username, display_name, dw_id)
         return f"You have successfully logged in as {display_name} ({username}). Your 'Discover Weekly' playlist will be copied every monday at 7:00 CET"
 
     else:
@@ -105,19 +112,46 @@ def error():
 
 def get_users():
     users = db.collection(u'users').get()
-    return (user.id for user in users)
+    return ((user.id, user.to_dict()) for user in users)
     
-def add_user(username, display_name):
+def add_user(username, display_name, dw_id):
     user = {
         "date_created" : datetime.now(),
-        "display_name": display_name
+        "display_name": display_name,
+        "dw_id": dw_id,
+        "recent_weekly_id": None,
+        "full_playlist_id": None,
+        "last_cw": None
     }
     ref = db.collection(u'users').document(username)
-    if not ref.get().exists:
+    doc = ref.get()
+    if not doc.exists:
         ref.set(user)
         logging.info(f"Added user to firestore db: {username}")
     else:
+        try:
+            doc.get("dw_id")
+        except KeyError:
+            ref.set(user, merge=["dw_id"])
         logging.info(f"User {username} already exists")
+
+
+def update_user_playlist_ids(username, recent_id, full_id=None, dw_id=None):
+    if not full_id:
+        ids = {
+            "recent_weekly_id": recent_id,
+            "last_cw" : this_week()
+        }
+    else:
+        ids = {
+            "recent_weekly_id": recent_id,
+            "full_playlist_id": full_id,
+            "dw_id": dw_id,
+            "last_cw" : this_week()}
+            
+    ref = db.collection(u'users').document(username)
+    ref.set(ids, merge=True)
+    logging.info(f"Updated playlist ids for user: {username}")
 
 
 @app.route("/save_playlists", methods = ['POST'])
@@ -125,7 +159,19 @@ def save_playlists():
     code = request.headers.get("passcode", "placeholder")
     if code == os.environ.get("SAVE_PLAYLISTS_CODE"):
         logging.info("Beginning playlist extraction.")
-        for user in get_users():
+        for user, data in get_users():
+            try:
+                dw_id = data["dw_id"]
+            except KeyError:
+                dw_id = get_playlist_id(sp, "Discover Weekly")
+                data["dw_id"] = dw_id
+            if not dw_id:
+                logging.warning(f"No dw id found for: {user}")
+                continue
+
+            #if not dw_id:
+            #    logging.warning(f"No dw id found for: {user}")
+            #    continue
             cache_handler = FirestoreCacheHandler(user, db)
             temp_auth = SpotifyOAuth(
                 client_id=os.environ.get("SPOTIFY_CLIENT_ID", "none"), 
@@ -142,7 +188,7 @@ def save_playlists():
                     print("an error occured")
                 access_token = token_info['access_token']
                 sp = spotipy.Spotify(access_token)
-                run_for_user(sp, user)
+                run_for_user(sp, user, data)
             else:
                 logging.warning(f"No token found for user: {user}")
                 continue
@@ -150,6 +196,8 @@ def save_playlists():
     else:
         return "You should not be here. Shoo"
 
+def this_week():
+    return datetime.today().isocalendar()[1]
 
 def parse_playlist_name(name):
     today = datetime.today()
@@ -175,9 +223,7 @@ def get_playlist_id(sp, playlist_name):
     return playlist_id
 
 def dw_tracks(sp, args):
-    dw_id = get_playlist_id(sp, "Discover Weekly")
-    if not dw_id:
-        raise LookupError("Discover Weekly playlist not found.")
+    dw_id = args.dw_id
     playlist_tracks = sp.user_playlist_tracks(
         user=args.username, 
         playlist_id=dw_id)["items"]
@@ -193,57 +239,50 @@ def dw_tracks(sp, args):
 def create_weekly(sp, args, ids):
     weekly_playlist_name = parse_playlist_name(args.weekly_name_template)
     # check if playlist exists already
-    playlist_id = get_playlist_id(sp, weekly_playlist_name)
-    if not playlist_id:
-        # create playlist
-        sp.user_playlist_create(
-            user=args.username, 
-            name=weekly_playlist_name, 
-            public=False, 
-            description="Automatically created by Discovered Weekly.")
+    results = sp.user_playlist_create(
+        user=args.username, 
+        name=weekly_playlist_name, 
+        public=False, 
+        description="Automatically created by Discovered Weekly.")
 
-        # find playlist id
-        playlist_id = get_playlist_id(sp, weekly_playlist_name)
+    # find playlist id
+    playlist_id = results["id"]
 
-        # add tracks to playlist
-        sp.user_playlist_add_tracks(
-            user=args.username, 
-            playlist_id=playlist_id, 
-            tracks=ids)
+    # add tracks to playlist
+    sp.user_playlist_add_tracks(
+        user=args.username, 
+        playlist_id=playlist_id, 
+        tracks=ids)
+
+    return playlist_id
+        
 
 def create_full(sp, args, ids):
     name = args.full_playlist_name
+    full_playlist_id = args.full_playlist_id
 
-    # Check if playlist already exists
-    full_playlist_id = get_playlist_id(sp, name)
     if not full_playlist_id:
-        sp.user_playlist_create(user=args.username, name=name, public=False, description="Automatically created by Discovered Weekly.")
-        full_playlist_id = get_playlist_id(sp, name)
+        results = sp.user_playlist_create(user=args.username, name=name, public=False, description="Automatically created by Discovered Weekly.")
+        full_playlist_id = results["id"]
 
-    # Check for duplicates in recently added tracks
-    playlist_tracks = sp.user_playlist_tracks(
-        user=args.username, 
-        playlist_id=full_playlist_id)["items"]
-    existing_ids = [x["track"]["id"] for x in playlist_tracks]
-    new_ids = [x for x in ids if x not in existing_ids]
-    
-    # Add tracks to playlist
-    if len(new_ids) > 0:
-        sp.user_playlist_add_tracks(user=args.username, playlist_id=full_playlist_id, tracks=new_ids)
-    
+    sp.user_playlist_add_tracks(user=args.username, playlist_id=full_playlist_id, tracks=ids)
+
+    return full_playlist_id
+
 
 
 def run_for_user(
     sp,
     username,
+    user_data,
     weekly_name_template="Discovered {week_of_year}-{year}",
     full_playlist_name="Discovered Weekly"
     ):
-    Args = namedtuple("Args", "username weekly_name_template full_playlist_name")
-    args = Args(username, weekly_name_template, full_playlist_name)
+    Args = namedtuple("Args", "username weekly_name_template full_playlist_name dw_id full_playlist_id")
+    args = Args(username, weekly_name_template, full_playlist_name, user_data["dw_id"], user_data["full_playlist_id"])
 
     logging.info(f"Extracting for user: {username}")
-    try:
+    if user_data["last_cw"] != this_week():
         ids, names, artists = dw_tracks(sp, args)
         batch = db.batch()
         for track_id, name, artist in zip(ids, names, artists):
@@ -266,10 +305,11 @@ def run_for_user(
                     u"count" : 1
                 })
         batch.commit()
-        create_weekly(sp, args, ids)
-        create_full(sp, args, ids)
-    except:
-        logging.warning(f"No Discover Weekly playlist found for user {username}")
+        weekly_id = create_weekly(sp, args, ids)
+        full_id = create_full(sp, args, ids)
+        update_user_playlist_ids(username, weekly_id, full_id, user_data["dw_id"])
+    else:
+        logging.warning("Stopped extraction because it has already been run this week")
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
