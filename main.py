@@ -51,7 +51,7 @@ db = firestore.client()
 auth = SpotifyOAuth(
         client_id=os.environ.get("SPOTIFY_CLIENT_ID", "none"), 
         client_secret=os.environ.get("SPOTIFY_CLIENT_SECRET", "none"), 
-        redirect_uri="https://pluester.dev/logged_in",
+        redirect_uri="https://discoveredweekly.com/logged_in",
         scope="playlist-modify-private playlist-read-private user-library-read",
         cache_handler=LossyCacheHandler())
 
@@ -181,7 +181,7 @@ def save_playlists():
             temp_auth = SpotifyOAuth(
                 client_id=os.environ.get("SPOTIFY_CLIENT_ID", "none"), 
                 client_secret=os.environ.get("SPOTIFY_CLIENT_SECRET", "none"), 
-                redirect_uri="https://pluester.dev/logged_in",
+                redirect_uri="https://discoveredweekly.com/logged_in",
                 scope="playlist-modify-private playlist-read-private user-library-read",
                 cache_handler=cache_handler)
             token_info = temp_auth.cache_handler.get_cached_token()
