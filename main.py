@@ -248,10 +248,23 @@ def run_for_user(
         batch = db.batch()
         for track_id, name, artist in zip(ids, names, artists):
             ref = db.collection(u"tracks").document(track_id)
-            batch.set(ref, {
-                "track_name": name,
-                "artist": artist
-            })
+            track = ref.get()
+            if track.exists:
+                try:
+                    count = track.get(u"count")
+                    batch.update(ref, {
+                        u"count" :  count + 1
+                    })
+                except KeyError:
+                    batch.set(ref, {
+                        u"count" :  2
+                    }, merge=[u"count"])
+            else:
+                batch.set(ref, {
+                    u"track_name": name,
+                    u"artist": artist,
+                    u"count" : 1
+                })
         batch.commit()
         create_weekly(sp, args, ids)
         create_full(sp, args, ids)
