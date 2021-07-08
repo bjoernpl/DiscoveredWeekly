@@ -17,7 +17,7 @@ class User:
         self.full_playlist_id = full_playlist_id
         self.last_cw = last_cw
 
-    @classmethod
+    @staticmethod
     def from_dict(source):
         return User(
             source["date_created"],
