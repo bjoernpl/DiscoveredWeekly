@@ -20,6 +20,10 @@ runs a POST request weekly on Monday at 7:00 AM CEST to start the process of cop
 ```
 git clone git@github.com:bjoernpl/DiscoveredWeekly.git
 ```
+- Navigate to repo:
+```
+cd DiscoveredWeekly
+```
 - Set all necessary environment variables in envs.txt (see [section 3.](#3-environment-variables))
 - Build and name container: 
 ```
