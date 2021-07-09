@@ -5,4 +5,5 @@ README.md
 *.pyd
 __pycache__
 envs.txt
+LICENSE
 .pytest_cache
