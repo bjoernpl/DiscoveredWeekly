@@ -34,7 +34,7 @@ sudo docker build . -t dweekly
 ```
 sudo docker run --env-file envs.txt -p 80:8080 -it dweekly
 ```
-This will have started a gunicorn worker process that can be accessed (if run locally) at `0.0.0.0`
+This will have started a gunicorn worker process that can be accessed (if run locally) at `0.0.0.0`.
 
 ## 3. Environment variables
 This app needs a few variables set in envs.txt to run properly:
