@@ -1,0 +1,14 @@
+# Your Spotify API access data
+SPOTIFY_CLIENT_ID=your_spotify_api_client_id
+SPOTIFY_CLIENT_SECRET=your_spotify_api_client_secret
+
+# Some password to protect the POST request for
+# saving all user's playlists
+SAVE_PLAYLISTS_CODE=somepassword
+
+# Flag to enable mock Firestore database for local running
+TESTING=True
+
+# URL data for Spotify API authentication requests
+BASE_URL=http://0.0.0.0
+PORT=8080
