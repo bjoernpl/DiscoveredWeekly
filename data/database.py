@@ -18,8 +18,13 @@ class Database(AbsDatabase):
         return ((user.id, User.from_dict(user.to_dict())) for user in users)
 
     def user_exists(self, username) -> bool:
-        user = self.db.collection(u'users').document(username).get()
-        return user.exists
+        doc = self.db.collection(u'users').document(username).get()
+        if doc.exists:
+            logging.info(f"User {username} exists.")
+            return True
+        else:
+            logging.info(f"User {username} doesn't exist yet.")
+            return False
 
     def add_user(self, username, display_name, dw_id) -> Tuple[str, User]:
         user = User(
