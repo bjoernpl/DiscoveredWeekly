@@ -25,7 +25,7 @@ git clone git@github.com:bjoernpl/DiscoveredWeekly.git
 ```
 cd DiscoveredWeekly
 ```
-- Set all necessary environment variables in envs.txt (see [section 3.](#3-environment-variables))
+- Set all necessary environment variables in [envs.txt](https://github.com/bjoernpl/DiscoveredWeekly/blob/main/envs.txt) (see [section 3.](#3-environment-variables))
 - Build and name container: 
 ```
 sudo docker build . -t dweekly
