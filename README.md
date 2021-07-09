@@ -15,12 +15,12 @@ Instead, Spotify access tokens are saved to a [Google Firestore](https://firebas
 runs a POST request weekly on Monday at 7:00 AM CEST to start the process of copying playlists for all users.
 
 ## 2. How to run
-- Make sure you have Docker installed
+- Make sure you have Docker installed: https://docs.docker.com/get-docker/
 - Clone this repo: 
 ```
 git clone git@github.com:bjoernpl/DiscoveredWeekly.git
 ```
-- Set all necessary environment variables in envs.txt (see [section 3](#3-environment-variables))
+- Set all necessary environment variables in envs.txt (see [section 3.](#3-environment-variables))
 - Build and name container: 
 ```
 sudo docker build . -t dweekly
@@ -50,4 +50,23 @@ BASE_URL=http://0.0.0.0
 PORT=8080
 ```
 
+## 4. The flow
+- The landing screen serves not much more function than to inform the user what the site is about and to present a big button.
+- Upon clicking that button, the user is prompted to authenticate via Spotify OAuth.
+- (TODO) If the user is not following their Discover Weekly playlist, they are prompted to do so.
+- The user then lands on a welcome screen and their Discover Weekly playlist is copied for the first time.
+  - A playlist titled `Discovered 29-2021` is created (for calender week 29).
+  - A playlist titled `Discovered Weekly` is created where every week's suggestions will be added
+
+## TODOs:
+- [x] Add a usable README
+- [ ] Code commenting
+- [ ] Design the pages
+- [ ] Implement prompt to follow Discover Weekly. This is necessary for the service to function.
+- [ ] Implement proper opt out possibility. As of now users can only opt out by blocking access to their Spotify account via https://www.spotify.com/us/account/apps/
+- [ ] Add some more error handling
+- [ ] Add tests
+  - Database tests
+  - Spotify tests
+  - API tests
 
