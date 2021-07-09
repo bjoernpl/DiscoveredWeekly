@@ -74,4 +74,5 @@ PORT=8080
   - Database tests
   - Spotify tests
   - API tests
+- [ ] Add Open graph meta tags and share button
 
