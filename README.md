@@ -1,4 +1,4 @@
-![DiscoveredWeekly](https://socialify.git.ci/bjoernpl/DiscoveredWeekly/image?description=1&font=Raleway&language=1&logo=https%3A%2F%2Fclipartart.com%2Fimages%2Fspotify-logo-clipart-2018-1.png&owner=1&pattern=Charlie%20Brown&theme=Dark)
+![DiscoveredWeekly](https://socialify.git.ci/bjoernpl/DiscoveredWeekly/image?description=1&descriptionEditable=Discovered%20Weekly%20automatically%20copies%20your%20Discover%20Weekly%20Spotify%20playlist%20so%20you%20never%20lose%20those%20precious%20suggestions.&font=Raleway&language=1&logo=https%3A%2F%2Fclipartart.com%2Fimages%2Fspotify-logo-clipart-2018-1.png&owner=1&pattern=Charlie%20Brown&theme=Dark)
 # DiscoveredWeekly
 Discovered Weekly is a website that automatically copies your <i>Discover Weekly</i> Spotify playlist every week
 to ensure that those precious suggestions never get lost. Check out [discoveredweekly.com](https://discoveredweekly.com) for a free hosted version.
