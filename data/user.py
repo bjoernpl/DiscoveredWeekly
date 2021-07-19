@@ -6,7 +6,7 @@ class User:
             self,
             date_created,
             display_name,
-            dw_id,
+            dw_id=None,
             recent_weekly_id=None,
             full_playlist_id=None,
             last_cw=None) -> None:
@@ -22,7 +22,7 @@ class User:
         return User(
             source["date_created"],
             source["display_name"],
-            source["dw_id"],
+            source.get("dw_id"),
             source.get("recent_weekly_id"),
             source.get("full_playlist_id"),
             source.get("last_cw")
