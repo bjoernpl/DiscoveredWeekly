@@ -18,12 +18,13 @@ from spotify import SpotifyUtils
 handler = logging.StreamHandler(sys.stdout)
 logging.basicConfig(handlers=[handler], level=logging.INFO)
 
-# Init Database and initial spotify utils 
+# Init Database and initial spotify utils
 database = Database()
 spotify_utils = SpotifyUtils(database, None, LossyCacheHandler())
 
 # Flask app
 app = Flask(__name__)
+
 
 @app.route("/")
 def main() -> None:
@@ -35,7 +36,7 @@ def main() -> None:
 
 @app.route("/logged_in")
 def logged_in():
-    """ Response to successful login authorization. URL here contains auth token."""
+    """Response to successful login authorization. URL here contains auth token."""
     try:
         token_info = spotify_utils.auth_response(request.url)
     except AuthenticationError as e:
@@ -48,16 +49,16 @@ def logged_in():
         if dw_id:
             # cache the dw playlist id for user
             user_id, user_data = database.add_user(username, display_name, dw_id)
-            out =  f"You have successfully logged in as {display_name} ({username}). Your 'Discover Weekly' playlist will be copied now and every monday at 7:00 CET."
+            out = f"You have successfully logged in as {display_name} ({username}). Your 'Discover Weekly' playlist will be copied now and every monday at 7:00 CET."
             run_for_user(spotify_utils, user_id, user_data)
         else:
             out = f"For this service to work, you must follow your 'Discover Weekly' playlist on spotify. Go to https://www.spotify.com/us/discoverweekly/ and copy the id out of the url to continue."
         return out
 
 
-@app.route("/save_playlists", methods = ['POST'])
+@app.route("/save_playlists", methods=["POST"])
 def save_playlists() -> None:
-    """ Save each users Discover Weekly playlist.
+    """Save each users Discover Weekly playlist.
 
     This method accepts a post request. If the request contains a
     header SAVE_PLAYLISTS_CODE with the correct passcode defined
@@ -86,8 +87,8 @@ def run_for_user(
     username: str,
     user: User,
     weekly_name_template="Discovered {week_of_year}-{year}",
-    full_playlist_name="Discovered Weekly"
-    ):
+    full_playlist_name="Discovered Weekly",
+):
     """Runs playlist extraction for a given user.
 
     Args:
@@ -97,7 +98,13 @@ def run_for_user(
         weekly_name_template (str, optional): Template for weekly playlist name. Defaults to "Discovered {week_of_year}-{year}".
         full_playlist_name (str, optional): Template for full playlist name. Defaults to "Discovered Weekly".
     """
-    su.args = SpotifyArgs(username, weekly_name_template, full_playlist_name, user.dw_id, user.full_playlist_id)
+    su.args = SpotifyArgs(
+        username,
+        weekly_name_template,
+        full_playlist_name,
+        user.dw_id,
+        user.full_playlist_id,
+    )
     logging.info(f"Extracting for user: {username}")
     if user.last_cw != this_week():
         ids, names, artists = su.dw_tracks()
@@ -108,6 +115,7 @@ def run_for_user(
         database.update_user_playlist_ids(username, weekly_id, full_id, user.dw_id)
     else:
         logging.warning("Stopped extraction because it has already been run this week")
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
