@@ -11,6 +11,7 @@ from data.database import Database
 from data.user import User
 from data.util import this_week
 from data.spotify_args import SpotifyArgs
+from exceptions.expections import AuthenticationError
 from spotify import SpotifyUtils
 
 # Configure logging
@@ -35,21 +36,23 @@ def main() -> None:
 @app.route("/logged_in")
 def logged_in():
     """ Response to successful login authorization. URL here contains auth token."""
-
-    username, display_name, dw_id = spotify_utils.auth_response(request.url)
-    if database.user_exists(username):
-        return f"You've already logged in as: {username}. Your Discover Weekly will be copied every monday."
-    if not dw_id:
-        # user does not follow dw playlist
-        pass
+    try:
+        token_info = spotify_utils.auth_response(request.url)
+    except AuthenticationError as e:
+        logging.error(e)
+        return "An error occured."
     else:
-        # cache the dw playlist id for user
-        user_id, user_data = database.add_user(username, display_name, dw_id)
-        out =  f"You have successfully logged in as {display_name} ({username}). Your 'Discover Weekly' playlist will be copied now and every monday at 7:00 CET."
-        run_for_user(spotify_utils, user_id, user_data)
-    if not dw_id:
-        out = f"For this service to work, you must follow your 'Discover Weekly' playlist on spotify. Go to https://www.spotify.com/us/discoverweekly/ and copy the id out of the url to continue."
-    return out
+        username, display_name, dw_id = spotify_utils.init_user(token_info)
+        if database.user_exists(username):
+            return f"You've already logged in as: {username}. Your Discover Weekly will be copied every monday."
+        if dw_id:
+            # cache the dw playlist id for user
+            user_id, user_data = database.add_user(username, display_name, dw_id)
+            out =  f"You have successfully logged in as {display_name} ({username}). Your 'Discover Weekly' playlist will be copied now and every monday at 7:00 CET."
+            run_for_user(spotify_utils, user_id, user_data)
+        else:
+            out = f"For this service to work, you must follow your 'Discover Weekly' playlist on spotify. Go to https://www.spotify.com/us/discoverweekly/ and copy the id out of the url to continue."
+        return out
 
 
 @app.route("/save_playlists", methods = ['POST'])
