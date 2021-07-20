@@ -1,22 +1,22 @@
-from data.user import User
+import logging
 import os
 import sys
-import logging
-from flask import Flask, render_template, request, redirect
-from datetime import datetime
-import spotipy
-from spotipy.oauth2 import SpotifyOAuth, SpotifyOauthError
 from collections import namedtuple
-from data.database import Database
+from datetime import datetime
+
+from flask import Flask, render_template, request
+
 from data.cache_handler import LossyCacheHandler
+from data.database import Database
+from data.user import User
 from data.util import this_week
 from spotify import SpotifyUtils
-    
 
+# Configure logging
 handler = logging.StreamHandler(sys.stdout)
 logging.basicConfig(handlers=[handler], level=logging.INFO)
-# Use the application default credentials for firebase admin
 
+# Init Database and initial spotify utils 
 database = Database()
 spotify_utils = SpotifyUtils(database, None, LossyCacheHandler())
 
@@ -24,19 +24,18 @@ spotify_utils = SpotifyUtils(database, None, LossyCacheHandler())
 app = Flask(__name__)
 
 @app.route("/")
-def main():
-    """ Main page
-    """
+def main() -> None:
+    """The index page shows some info and a button to authenticate with spotify."""
+
     auth_url = spotify_utils.auth.get_authorize_url()
-    logging.debug(f"Authentication URL for user is: {auth_url}")
     return render_template("main.html", auth_url=auth_url)
+
 
 @app.route("/logged_in")
 def logged_in():
-    """ Response to successful login authorization. URL here contains auth token
-    """
-    url = request.url
-    username, display_name, dw_id = spotify_utils.auth_response(url)
+    """ Response to successful login authorization. URL here contains auth token."""
+
+    username, display_name, dw_id = spotify_utils.auth_response(request.url)
     if database.user_exists(username):
         return f"You've already logged in as: {username}. Your Discover Weekly will be copied every monday."
     if not dw_id:
@@ -51,13 +50,16 @@ def logged_in():
         out = f"For this service to work, you must follow your 'Discover Weekly' playlist on spotify. Go to https://www.spotify.com/us/discoverweekly/ and copy the id out of the url to continue."
     return out
 
-@app.route("/error")
-def error():
-    pass
-
 
 @app.route("/save_playlists", methods = ['POST'])
-def save_playlists():
+def save_playlists() -> None:
+    """ Save each users Discover Weekly playlist.
+
+    This method accepts a post request. If the request contains a
+    header SAVE_PLAYLISTS_CODE with the correct passcode defined
+    in envs.txt, the function continues. For each user, it attempts
+    to copy all songs from their DW into a new playlist.
+    """
     code = request.headers.get("passcode", "placeholder")
     if code == os.environ.get("SAVE_PLAYLISTS_CODE"):
         logging.info("Beginning playlist extraction.")
@@ -82,6 +84,15 @@ def run_for_user(
     weekly_name_template="Discovered {week_of_year}-{year}",
     full_playlist_name="Discovered Weekly"
     ):
+    """Runs playlist extraction for a given user.
+
+    Args:
+        su (SpotifyUtils): The SpotifyUtils instance authenticated for this user
+        username (str): The user's username
+        user (User): The user
+        weekly_name_template (str, optional): Template for weekly playlist name. Defaults to "Discovered {week_of_year}-{year}".
+        full_playlist_name (str, optional): Template for full playlist name. Defaults to "Discovered Weekly".
+    """
     Args = namedtuple("Args", "username weekly_name_template full_playlist_name dw_id full_playlist_id")
     su.args = Args(username, weekly_name_template, full_playlist_name, user.dw_id, user.full_playlist_id)
     logging.info(f"Extracting for user: {username}")
