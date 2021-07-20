@@ -10,6 +10,7 @@ from data.cache_handler import LossyCacheHandler
 from data.database import Database
 from data.user import User
 from data.util import this_week
+from data.spotify_args import SpotifyArgs
 from spotify import SpotifyUtils
 
 # Configure logging
@@ -93,8 +94,7 @@ def run_for_user(
         weekly_name_template (str, optional): Template for weekly playlist name. Defaults to "Discovered {week_of_year}-{year}".
         full_playlist_name (str, optional): Template for full playlist name. Defaults to "Discovered Weekly".
     """
-    Args = namedtuple("Args", "username weekly_name_template full_playlist_name dw_id full_playlist_id")
-    su.args = Args(username, weekly_name_template, full_playlist_name, user.dw_id, user.full_playlist_id)
+    su.args = SpotifyArgs(username, weekly_name_template, full_playlist_name, user.dw_id, user.full_playlist_id)
     logging.info(f"Extracting for user: {username}")
     if user.last_cw != this_week():
         ids, names, artists = su.dw_tracks()
