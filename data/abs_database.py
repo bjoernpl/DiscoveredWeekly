@@ -19,7 +19,7 @@ class AbsDatabase(ABC):
         else:
             cred = credentials.ApplicationDefault()
             initialize_app(cred, {
-                'projectId': "discovered-weekly-316016",
+                'projectId': os.getenv('FIREBASE_PROJECT_ID', 'None'),
             })
             self.db = firestore.Client()
 

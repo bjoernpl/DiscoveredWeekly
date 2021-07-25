@@ -49,6 +49,8 @@ SAVE_PLAYLISTS_CODE=somepassword
 
 # Flag to enable mock Firestore database for local running
 TESTING=True
+# Connect to your firebase project (Firestore DB) by changing this variable
+FIREBASE_PROJECT_ID="your-project-id-123456"
 
 # URL data for Spotify API authentication requests
 BASE_URL=http://0.0.0.0
