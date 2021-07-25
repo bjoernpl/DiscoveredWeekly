@@ -1,7 +1,9 @@
 from datetime import datetime
 
+
 def this_week():
     return datetime.today().isocalendar()[1]
+
 
 def parse_playlist_name(name):
     today = datetime.today()
