@@ -35,7 +35,7 @@ def main() -> None:
 
 
 @app.route("/logged_in")
-def logged_in():
+def logged_in() -> None:
     """Response to successful login authorization. URL here contains auth token."""
     try:
         token_info = spotify_utils.auth_response(request.url)
@@ -88,7 +88,7 @@ def run_for_user(
     user: User,
     weekly_name_template="Discovered {week_of_year}-{year}",
     full_playlist_name="Discovered Weekly",
-):
+) -> None:
     """Runs playlist extraction for a given user.
 
     Args:
